@@ -1,0 +1,857 @@
+<title>Stressomnia Buster</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&display=swap">
+<style>
+/* Layout: one dim column, like a bedside lamp turned low. Warm ember on near-black, no blue light, single dark look by design. */
+:root {
+  --bg: #0c0907;
+  --surface: #15100c;
+  --surface-2: #1d1610;
+  --line: #2b2119;
+  --fg: #d8b58e;
+  --fg-soft: #b8977a;
+  --muted: #7f6752;
+  --ember: #c6693f;
+  --ember-dim: #6e3a24;
+  --glow: rgba(198, 105, 63, 0.32);
+  --on-accent: #e6c6a0;
+  --display: "Newsreader", Georgia, "Times New Roman", serif;
+  --ui: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--ui);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+#dimmer {
+  position: fixed; inset: 0; background: #000; pointer-events: none;
+  opacity: 0.15; z-index: 50; transition: opacity .4s;
+}
+.wrap {
+  max-width: 34rem; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 40px;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible {
+  outline: 2px solid var(--ember); outline-offset: 3px;
+}
+
+/* ---------- Home ---------- */
+.mark {
+  font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--muted); display: flex; align-items: center; gap: 10px;
+}
+.mark::before {
+  content: ""; width: 9px; height: 9px; border-radius: 50%;
+  background: var(--ember); box-shadow: 0 0 12px 3px var(--glow);
+}
+h1 {
+  font-family: var(--display); font-weight: 300; font-size: clamp(30px, 8vw, 40px);
+  line-height: 1.12; margin: 22px 0 10px; text-wrap: balance; color: var(--fg);
+}
+h1 em { font-style: italic; color: var(--ember); }
+.lede { color: var(--fg-soft); margin: 0 0 30px; max-width: 30rem; }
+.label {
+  font-size: 12px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--muted); margin: 0 0 12px;
+}
+.states { display: grid; gap: 10px; margin-bottom: 34px; }
+.state {
+  text-align: left; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 14px; padding: 16px 18px; display: grid;
+  grid-template-columns: 1fr auto; gap: 2px 14px; align-items: center;
+  transition: border-color .2s, background .2s;
+}
+.state:hover, .state:active { border-color: var(--ember-dim); background: var(--surface-2); }
+.state b { font-family: var(--display); font-weight: 400; font-size: 21px; color: var(--fg); }
+.state span { color: var(--muted); font-size: 14px; grid-column: 1; }
+.state i {
+  grid-row: 1 / span 2; grid-column: 2; font-style: normal; font-size: 13px;
+  color: var(--fg-soft); font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+details { border-top: 1px solid var(--line); }
+details:last-of-type { border-bottom: 1px solid var(--line); }
+summary {
+  list-style: none; padding: 16px 0; display: flex; justify-content: space-between;
+  align-items: center; color: var(--fg-soft); cursor: pointer;
+}
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; color: var(--muted); font-size: 20px; line-height: 1; }
+details[open] summary::after { content: "–"; }
+.techs { display: grid; gap: 4px; padding-bottom: 16px; }
+.tech {
+  background: none; border: 0; text-align: left; padding: 10px 0;
+  display: flex; justify-content: space-between; gap: 12px; color: var(--fg);
+}
+.tech small { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.settings { display: grid; gap: 16px; padding-bottom: 18px; }
+.row { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.row label { color: var(--fg); }
+.row label small { display: block; color: var(--muted); font-size: 13px; }
+.switch {
+  width: 48px; height: 28px; border-radius: 14px; border: 1px solid var(--line);
+  background: var(--surface); position: relative; flex: none; padding: 0;
+}
+.switch::after {
+  content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px;
+  border-radius: 50%; background: var(--muted); transition: transform .2s, background .2s;
+}
+.switch[aria-checked="true"] { background: var(--ember-dim); border-color: var(--ember-dim); }
+.switch[aria-checked="true"]::after { transform: translateX(20px); background: var(--fg); }
+input[type="range"] { width: 140px; accent-color: var(--ember); }
+.notes { padding-bottom: 16px; display: grid; gap: 10px; }
+.note { background: var(--surface); border-radius: 10px; padding: 12px 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.note time { display: block; color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+.empty { color: var(--muted); font-size: 14px; margin: 0; }
+.textbtn {
+  background: none; border: 0; padding: 6px 0; color: var(--ember);
+  text-decoration: underline; text-underline-offset: 3px;
+}
+.foot { color: var(--muted); font-size: 13px; margin-top: 28px; }
+
+/* ---------- Session ---------- */
+#session { height: 100%; display: flex; flex-direction: column; }
+#session .wrap { flex: 1; display: flex; flex-direction: column; width: 100%; box-sizing: border-box; padding-block: 18px 22px; }
+.topbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.dots { display: flex; gap: 6px; flex-wrap: wrap; }
+.dots span { width: 18px; height: 3px; border-radius: 2px; background: var(--line); }
+.dots span.done { background: var(--ember-dim); }
+.dots span.now { background: var(--ember); }
+.iconbtn {
+  background: none; border: 1px solid var(--line); border-radius: 999px;
+  padding: 7px 14px; color: var(--fg-soft); font-size: 14px;
+}
+.stage {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; gap: 22px; padding: 20px 0; transition: opacity .6s;
+}
+.steptitle { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); min-height: 18px; }
+.orbbox { width: 200px; height: 200px; max-width: 100%; display: grid; place-items: center; }
+.orb {
+  width: 180px; height: 180px; border-radius: 50%;
+  background: radial-gradient(circle closest-side at 50% 50%, rgba(214,130,82,.55), rgba(160,78,45,.28) 50%, rgba(130,60,35,.08) 80%, rgba(120,50,30,0) 100%);
+  transform: scale(.45);
+}
+.orb.ambient { animation: ambient 11s ease-in-out infinite; }
+@keyframes ambient { 0%,100% { transform: scale(.42); } 45% { transform: scale(.6); } }
+.phase { font-family: var(--display); font-size: 26px; font-weight: 300; min-height: 34px; color: var(--fg); }
+.count { color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; min-height: 20px; }
+.prompt {
+  font-family: var(--display); font-weight: 300; font-size: clamp(24px, 6.4vw, 31px);
+  line-height: 1.3; max-width: 26rem; text-wrap: balance; margin: 0; color: var(--fg);
+  transition: opacity .7s;
+}
+.prompt.fade { opacity: 0; }
+.picture { font-family: var(--display); font-style: italic; font-size: clamp(34px, 10vw, 46px); color: var(--ember); }
+.dumpbox { width: 100%; display: grid; gap: 12px; }
+textarea {
+  width: 100%; box-sizing: border-box; min-height: 150px; resize: vertical;
+  background: var(--surface); color: var(--fg); border: 1px solid var(--line);
+  border-radius: 12px; padding: 14px; font: inherit; line-height: 1.5;
+}
+textarea::placeholder { color: var(--muted); }
+.primary {
+  background: var(--ember-dim); border: 1px solid var(--ember-dim); color: var(--on-accent);
+  border-radius: 999px; padding: 13px 22px; font-weight: 500;
+}
+.controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); gap: 8px; transition: opacity .6s; }
+.controls button {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+  padding: 12px 4px; color: var(--fg-soft); font-size: 14px;
+}
+body.lightsout .stage { opacity: .1; }
+body.lightsout .controls, body.lightsout .topbar { opacity: .14; }
+body.lightsout #lightsBtn { opacity: 1; }
+
+/* ---------- End / get-up ---------- */
+.endscreen { display: flex; flex-direction: column; gap: 14px; }
+.endscreen .primary, .endscreen .ghost { width: 100%; }
+.ghost {
+  background: none; border: 1px solid var(--line); color: var(--fg-soft);
+  border-radius: 999px; padding: 13px 22px;
+}
+.plan { margin: 6px 0 22px; padding: 0; list-style: none; display: grid; gap: 14px; }
+.plan li { display: grid; grid-template-columns: 28px 1fr; gap: 10px; color: var(--fg-soft); }
+.plan li::before {
+  content: counter(step); counter-increment: step; font-family: var(--display);
+  color: var(--ember); font-size: 20px; line-height: 1.2;
+}
+.plan { counter-reset: step; }
+.plan strong { color: var(--fg); font-weight: 500; }
+.callout { background: var(--surface); border-radius: 12px; padding: 14px 16px; color: var(--fg-soft); font-size: 15px; }
+
+.tick { font-family: var(--display); font-size: 64px; line-height: 1; min-height: 64px; font-variant-numeric: tabular-nums; color: var(--fg); }
+.seg { display: flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; flex: none; }
+.seg button { background: none; border: 0; padding: 8px 14px; font-size: 14px; color: var(--fg-soft); }
+.seg button[aria-pressed="true"] { background: var(--ember-dim); color: var(--on-accent); }
+
+/* ---------- E-ink: pure black and white, no motion, no gradients, heavier strokes ---------- */
+:root[data-display="eink"] {
+  --bg: #ffffff; --surface: #ffffff; --surface-2: #ffffff; --line: #000000;
+  --fg: #000000; --fg-soft: #000000; --muted: #333333;
+  --ember: #000000; --ember-dim: #000000; --on-accent: #ffffff; --glow: transparent;
+  color-scheme: light;
+}
+:root[data-display="eink"][data-ink="dark"] {
+  --bg: #000000; --surface: #000000; --surface-2: #000000; --line: #ffffff;
+  --fg: #ffffff; --fg-soft: #ffffff; --muted: #cccccc;
+  --ember: #ffffff; --ember-dim: #ffffff; --on-accent: #000000;
+  color-scheme: dark;
+}
+[data-display="eink"] *, [data-display="eink"] *::before, [data-display="eink"] *::after {
+  transition: none !important; animation: none !important; box-shadow: none !important;
+}
+[data-display="eink"] .glow-only, [data-display="eink"] #dimmer, [data-display="eink"] .orbbox { display: none !important; }
+[data-display="eink"] body { font-size: 18px; }
+[data-display="eink"] h1, [data-display="eink"] .prompt, [data-display="eink"] .phase,
+[data-display="eink"] .state b, [data-display="eink"] .picture { font-weight: 400; }
+[data-display="eink"] .prompt { font-size: clamp(28px, 4.6vw, 38px); max-width: 32rem; }
+[data-display="eink"] .phase { font-size: 40px; min-height: 48px; }
+[data-display="eink"] .tick { font-size: 96px; min-height: 96px; }
+[data-display="eink"] .state, [data-display="eink"] .controls button, [data-display="eink"] .iconbtn,
+[data-display="eink"] .ghost, [data-display="eink"] textarea, [data-display="eink"] .seg,
+[data-display="eink"] .switch, [data-display="eink"] .note, [data-display="eink"] .callout { border: 2px solid var(--line); }
+[data-display="eink"] .state { padding: 20px; }
+[data-display="eink"] .controls button { padding: 16px 4px; font-size: 16px; font-weight: 600; color: var(--fg); }
+[data-display="eink"] .mark::before { box-shadow: none; }
+[data-display="eink"] .switch::after { background: var(--fg); }
+[data-display="eink"] .switch[aria-checked="true"] { background: var(--fg); }
+[data-display="eink"] .switch[aria-checked="true"]::after { background: var(--bg); }
+[data-display="eink"] .dots span { height: 6px; background: none; border: 1.5px solid var(--fg); box-sizing: border-box; }
+[data-display="eink"] .dots span.done, [data-display="eink"] .dots span.now { background: var(--fg); }
+[data-display="eink"] .dots span.now { height: 10px; }
+[data-display="eink"] .stage { gap: 26px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .orb, .orb.ambient { animation: none !important; transition: none !important; }
+  .prompt { transition: none; }
+}
+</style>
+
+<div id="dimmer"></div>
+
+<!-- HOME -->
+<main id="home">
+  <div class="wrap">
+    <div class="mark">Stressomnia Buster</div>
+    <h1>Awake again? Let's <em>turn your body down</em>.</h1>
+    <p class="lede">Pick what this waking feels like. You'll get one calm prompt at a time, timed for you, so you can close your eyes and follow along by voice.</p>
+
+    <p class="label">Right now I feel</p>
+    <div class="states" id="states"></div>
+
+    <details id="techDetails">
+      <summary>Just one technique</summary>
+      <div class="techs" id="techs"></div>
+    </details>
+
+    <details>
+      <summary>Sound and brightness</summary>
+      <div class="settings">
+        <div class="row">
+          <label>Display<small>E-ink turns off animation and color for paper screens</small></label>
+          <div class="seg" id="displaySeg">
+            <button data-v="eink">E-ink</button>
+            <button data-v="glow">Glowing</button>
+          </div>
+        </div>
+        <div class="row eink-only">
+          <label>E-ink page<small>Black can ghost a little more on some screens</small></label>
+          <div class="seg" id="inkSeg">
+            <button data-v="light">White</button>
+            <button data-v="dark">Black</button>
+          </div>
+        </div>
+        <div class="row">
+          <label for="voiceSw">Read prompts aloud<small>Quiet voice, so your eyes can stay closed</small></label>
+          <button class="switch" id="voiceSw" role="switch" aria-checked="true"></button>
+        </div>
+        <div class="row">
+          <label for="toneSw">Breathing tones<small>Soft hum rises as you breathe in, falls as you breathe out</small></label>
+          <button class="switch" id="toneSw" role="switch" aria-checked="false"></button>
+        </div>
+        <div class="row glow-only">
+          <label for="dimRange">Screen brightness<small>Lower is better for sleep</small></label>
+          <input type="range" id="dimRange" min="15" max="100" step="5" value="85">
+        </div>
+      </div>
+    </details>
+
+    <details id="notesDetails">
+      <summary id="notesSummary">Parked thoughts</summary>
+      <div class="notes" id="notes"></div>
+    </details>
+
+    <p class="foot">
+      There's no clock in this app on purpose. Checking the time keeps the alarm system running.<br><br>
+      <button class="textbtn" id="getupLink">Been awake a long while? The get-up plan</button><br><br>
+      This is a self-help tool, not medical care. If night waking happens most nights for weeks, CBT-I (cognitive behavioral therapy for insomnia) is the most effective treatment and worth asking a doctor about.
+    </p>
+  </div>
+</main>
+
+<!-- SESSION -->
+<section id="session" hidden>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="dots" id="dots"></div>
+      <button class="iconbtn" id="exitBtn">End</button>
+    </div>
+    <div class="stage" id="stage">
+      <div class="steptitle" id="stepTitle"></div>
+      <div class="orbbox" id="orbBox"><div class="orb ambient" id="orb"></div></div>
+      <div class="phase" id="phase" hidden></div>
+      <div class="tick" id="tick" hidden></div>
+      <div class="count" id="count" hidden></div>
+      <p class="prompt" id="prompt"></p>
+      <div class="dumpbox" id="dumpBox" hidden>
+        <textarea id="dumpText" placeholder="Tomorrow: email about the deadline…"></textarea>
+        <button class="primary" id="dumpDone">Park it until morning</button>
+      </div>
+    </div>
+    <div class="controls">
+      <button id="backBtn">Back</button>
+      <button id="pauseBtn">Pause</button>
+      <button id="skipBtn">Skip</button>
+      <button id="lightsBtn" class="glow-only">Lights out</button>
+    </div>
+  </div>
+</section>
+
+<!-- END -->
+<section id="end" hidden>
+  <div class="wrap endscreen">
+    <div class="mark">Round complete</div>
+    <h1>Phone face down. <em>Eyes closed.</em></h1>
+    <p class="lede">You've done the work. Keep the long, slow exhales going and let sleep arrive on its own schedule.</p>
+    <button class="primary" id="againBtn">Still wired: one more, slower round</button>
+    <button class="ghost" id="endGetup">Awake a long while? The get-up plan</button>
+    <button class="ghost" id="homeBtn">Back to start</button>
+  </div>
+</section>
+
+<!-- GET UP PLAN -->
+<section id="getup" hidden>
+  <div class="wrap">
+    <div class="mark">The get-up plan</div>
+    <h1>If you're <em>more alert</em> than drowsy</h1>
+    <p class="lede">When it feels like 20 minutes or more and you're getting frustrated, lying there teaches your brain that bed is a place for struggling. A short break resets that.</p>
+    <ol class="plan">
+      <li><span><strong>Get up and go somewhere else.</strong> Another room or a chair. Keep lights low and warm.</span></li>
+      <li><span><strong>Do something dull and pleasant.</strong> A paper book, folding laundry, a jigsaw. Avoid work, news and scrolling.</span></li>
+      <li><span><strong>Skip food, alcohol and the clock.</strong> No need to know what time it is.</span></li>
+      <li><span><strong>Go back when your eyelids get heavy.</strong> Not when you think you should. Sleepy, not just tired.</span></li>
+      <li><span><strong>Keep tomorrow's wake time the same.</strong> Sleeping in makes the next night harder. Tomorrow you'll be tired, and that pressure helps you sleep.</span></li>
+    </ol>
+    <p class="callout">One short night is uncomfortable, not dangerous. Your body is good at catching up on deep sleep the following night.</p>
+    <p><button class="ghost" id="getupBack" style="width:100%">Back</button></p>
+  </div>
+</section>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- Settings ---------- */
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  };
+  const S = Object.assign({ voice: true, tones: false, bright: 85, display: "eink", ink: "light" }, store.get("sb-settings", {}));
+  const saveSettings = () => store.set("sb-settings", S);
+  const isInk = () => S.display === "eink";
+  function applyDisplay() {
+    document.documentElement.setAttribute("data-display", S.display);
+    document.documentElement.setAttribute("data-ink", S.ink);
+    document.querySelectorAll(".eink-only").forEach((n) => { n.hidden = !isInk(); });
+    document.querySelectorAll("#displaySeg button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === S.display)));
+    document.querySelectorAll("#inkSeg button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === S.ink)));
+  }
+  applyDisplay();
+
+  const $ = (id) => document.getElementById(id);
+  const dimmer = $("dimmer");
+  function applyBright() { dimmer.style.opacity = String((100 - S.bright) / 100 * 0.85); }
+
+  /* ---------- Content ---------- */
+  const B = (label, secs, scale, cue, tone) => ({ label, secs, scale, cue, tone });
+
+  const STEPS = {
+    arrive: { title: "Arrive", kind: "say", lines: [
+      ["You're awake. That's okay. Nothing needs fixing right now.", 7],
+      ["Don't check the clock. The time doesn't matter for the next few minutes.", 7],
+      ["Let your shoulders drop, and unclench your jaw.", 7]
+    ]},
+    orient: { title: "You're safe", kind: "say", lines: [
+      ["Feel the weight of your body on the mattress.", 8],
+      ["Notice the pillow under your head, and the blanket on your skin.", 8],
+      ["Find three sounds around you. Just name them quietly to yourself.", 13],
+      ["You're in bed, and you're safe. Your body set off an alarm, and alarms can switch off.", 9]
+    ]},
+    sigh: { title: "Physiological sigh", kind: "breath", time: "40 sec",
+      intro: "Two breaths in through the nose, then one long breath out through the mouth. It's the quickest way to tell your body it can stand down.",
+      cycles: 4,
+      phases: [B("Breathe in", 2, .78, "In", "up"), B("A little more", 1, 1, "more", "up2"), B("Long sigh out", 6, .36, "and out", "down")]
+    },
+    exhale: { title: "Long exhale", kind: "breath", time: "1.5 min",
+      intro: "Breathe in for four, out for seven. When the out-breath is longer, your heart rate slows down.",
+      cycles: 8,
+      phases: [B("Breathe in", 4, 1, "In", "up"), B("Breathe out", 7, .36, "out", "down")]
+    },
+    hum: { title: "Humming breath", kind: "breath", time: "1 min",
+      intro: "Breathe in through your nose, then hum softly with your lips closed as you breathe out. Feel the buzz in your chest and face.",
+      cycles: 6,
+      phases: [B("Breathe in", 4, 1, "In", "up"), B("Hum out", 7, .36, "hum", "down")]
+    },
+    "478": { title: "4-7-8 breath", kind: "breath", time: "1.5 min",
+      intro: "In for four, hold for seven, out for eight. If the hold feels uncomfortable, make it shorter. Comfort matters more than the count.",
+      cycles: 4,
+      phases: [B("Breathe in", 4, 1, "In", "up"), B("Hold", 7, 1, "hold", null), B("Breathe out", 8, .36, "out", "down")]
+    },
+    butterfly: { title: "Butterfly hug", kind: "say", time: "1 min", lines: [
+      ["Cross your arms over your chest, with your hands resting near your collarbones.", 9],
+      ["Tap slowly, left, then right, like a slow heartbeat.", 10],
+      ["Keep tapping. Breathe normally. There's nowhere you need to be.", 22],
+      ["Let the tapping slow down, then stop. Leave your hands where they are.", 10]
+    ]},
+    cool: { title: "Cool down", kind: "say", lines: [
+      ["If you feel hot or flushed, push the covers off your feet, or let one leg rest outside the blanket.", 10],
+      ["A slightly cooler body settles faster.", 6]
+    ]},
+    pmr: { title: "Tense and release", kind: "say", time: "2.5 min", lines: (function () {
+      const parts = [
+        ["your toes, curling them tight", "feet"],
+        ["your calves, pointing your toes", "legs"],
+        ["your thighs and seat", "hips"],
+        ["your hands into fists", "hands"],
+        ["your arms, pulling them to your sides", "arms"],
+        ["your shoulders up toward your ears", "shoulders"],
+        ["your face, scrunching it up", "face"]
+      ];
+      const out = [["We'll squeeze one area at a time, then let it go. Tense to about half strength, never to pain.", 8]];
+      parts.forEach(([how, where]) => {
+        out.push(["Squeeze " + how + ". Hold it.", 6]);
+        out.push(["Release. Feel your " + where + " go loose and heavy.", 10]);
+      });
+      return out;
+    })()},
+    bodyscan: { title: "Body scan", kind: "say", time: "1.5 min", lines: [
+      ["Bring your attention to the top of your head. Let your scalp soften.", 10],
+      ["Smooth your forehead. Let your eyes sink back.", 10],
+      ["Unclench your jaw. Let your tongue rest on the floor of your mouth.", 10],
+      ["Let your shoulders melt down, away from your ears.", 10],
+      ["Your arms are heavy, all the way to your fingertips.", 10],
+      ["Your belly is soft. Your breath moves it gently.", 10],
+      ["Your hips and legs are heavy, sinking into the bed.", 10],
+      ["Your feet are warm and still.", 10],
+      ["Your whole body is heavy. Let the bed hold all of it.", 14]
+    ]},
+    dump: { title: "Park the thoughts", kind: "dump", time: "1 min",
+      text: "Type whatever is looping. A few words each is enough. It'll be here in the morning, so your brain can stop holding it." },
+    shuffle: { title: "Picture these", kind: "shuffle", time: "3 min", count: 18, secs: 10,
+      intro: "Picture each object clearly: its color, its texture, where it's sitting. Don't connect them or make a story. Let each one drift away." },
+    safe: { title: "Safe place", kind: "say", time: "1.5 min", lines: [
+      ["Picture a place where you feel completely at ease. It can be real or imagined.", 12],
+      ["What's the light like there? Soft, warm, dim?", 12],
+      ["What can you hear?", 12],
+      ["What's the temperature on your skin?", 12],
+      ["Stay there. Nothing is asked of you.", 22]
+    ]},
+    paradox: { title: "Rest, awake", kind: "say", time: "40 sec", lines: [
+      ["Here's a trick: instead of trying to sleep, give yourself permission to rest awake.", 9],
+      ["Keep your eyes closed, and gently tell yourself: I'll just stay awake a little longer.", 10],
+      ["No effort. Quiet rest still restores your body.", 9],
+      ["If sleep comes, let it.", 10]
+    ]},
+    reassure: { title: "Perspective", kind: "say", lines: [
+      ["Waking in the night is normal. Most people wake several times and don't remember it.", 8],
+      ["One rough night won't ruin tomorrow. You'll cope. You always have.", 8],
+      ["Your only job right now is to rest. Sleep will follow when it's ready.", 8]
+    ]},
+    close: { title: "Settle in", kind: "say", lines: [
+      ["That's the end of this round. Put the phone down, screen away.", 8],
+      ["Keep breathing slowly. Let sleep find you.", 8]
+    ]}
+  };
+
+  const SEQS = {
+    racing:  { name: "Mind is racing", sub: "Thoughts looping, planning, replaying", steps: ["arrive", "sigh", "dump", "shuffle", "exhale", "bodyscan", "close"] },
+    anxious: { name: "Heart pounding", sub: "Jolted awake, anxious, or a bad dream", steps: ["orient", "sigh", "hum", "butterfly", "cool", "safe", "close"] },
+    tense:   { name: "Body won't settle", sub: "Restless, tense, can't get comfortable", steps: ["arrive", "sigh", "pmr", "exhale", "bodyscan", "close"] },
+    awake:   { name: "Wide awake, not upset", sub: "Calm enough, just can't drift off", steps: ["reassure", "478", "shuffle", "paradox", "close"] },
+    deeper:  { name: "One more, slower", steps: ["exhale", "bodyscan", "shuffle", "paradox", "close"] }
+  };
+
+  const SINGLES = ["sigh", "exhale", "hum", "478", "butterfly", "pmr", "bodyscan", "shuffle", "safe", "dump", "paradox"];
+
+  const WORDS = ["an acorn","a teacup","a lantern","a pinecone","a feather","a canoe","a red mitten","a lighthouse","a smooth pebble","a violin","a honeycomb","a snowflake","a yellow umbrella","a small cactus","a seashell","a kite","a wheelbarrow","a candle","an owl","a maple leaf","a rowboat","a patchwork quilt","a pear","a harmonica","a windmill","a cello","a brass compass","a fern","a tortoise","a bicycle","an apricot","a birch tree","a wool scarf","a meadow","a hammock","a river stone","a paper boat","a wool sock","a wooden button","a clay pot","a hot-air balloon","a stack of pancakes","a watering can","a pine forest","a snail","a peach","a tugboat","a bookshelf","a lemon","a dandelion","a wooden spoon","a field mouse","a croissant","a rocking chair","a sunflower","a glass marble","a sailboat","a loaf of bread","a garden gate","an otter","a cloud","a pumpkin","a chess pawn","a blue ribbon","an igloo","a flute","a seagull","a mushroom","a clothesline","a cherry","a red barn","a telescope","a feather pillow","a mug of cocoa","an olive","a raindrop","a fox","a stone cottage","stepping stones","a paintbrush","a basket of apples","a fishing boat","a bowl of soup","a pair of slippers","a hedgehog","a lily pad"];
+
+  function stepSecs(id) {
+    const s = STEPS[id];
+    if (s.kind === "say") return s.lines.reduce((a, l) => a + l[1], 0);
+    if (s.kind === "breath") return 7 + s.cycles * s.phases.reduce((a, p) => a + p.secs, 0);
+    if (s.kind === "shuffle") return 8 + s.count * s.secs;
+    return 60;
+  }
+  const fmtMin = (secs) => Math.max(1, Math.round(secs / 60)) + " min";
+
+  /* ---------- Home render ---------- */
+  function renderHome() {
+    const states = $("states");
+    states.innerHTML = "";
+    ["racing", "anxious", "tense", "awake"].forEach((k) => {
+      const q = SEQS[k];
+      const b = document.createElement("button");
+      b.className = "state";
+      const total = q.steps.reduce((a, id) => a + stepSecs(id), 0);
+      b.innerHTML = "<b></b><span></span><i></i>";
+      b.querySelector("b").textContent = q.name;
+      b.querySelector("span").textContent = q.sub;
+      b.querySelector("i").textContent = "~" + fmtMin(total);
+      b.addEventListener("click", () => start(q.steps));
+      states.appendChild(b);
+    });
+    const techs = $("techs");
+    techs.innerHTML = "";
+    SINGLES.forEach((id) => {
+      const b = document.createElement("button");
+      b.className = "tech";
+      b.innerHTML = "<span></span><small></small>";
+      b.querySelector("span").textContent = STEPS[id].title;
+      b.querySelector("small").textContent = STEPS[id].time || fmtMin(stepSecs(id));
+      b.addEventListener("click", () => start([id, "close"]));
+      techs.appendChild(b);
+    });
+    renderNotes();
+  }
+
+  let clearArmed = false;
+  function renderNotes() {
+    const notes = store.get("sb-notes", []);
+    $("notesSummary").firstChild.textContent = "Parked thoughts" + (notes.length ? " (" + notes.length + ")" : "");
+    const box = $("notes");
+    box.innerHTML = "";
+    if (!notes.length) {
+      const p = document.createElement("p");
+      p.className = "empty";
+      p.textContent = "Anything you park during a session shows up here for the morning.";
+      box.appendChild(p);
+      return;
+    }
+    notes.slice().reverse().forEach((n) => {
+      const d = document.createElement("div");
+      d.className = "note";
+      const t = document.createElement("time");
+      t.textContent = new Date(n.t).toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
+      d.appendChild(t);
+      d.appendChild(document.createTextNode(n.text));
+      box.appendChild(d);
+    });
+    const c = document.createElement("button");
+    c.className = "textbtn";
+    c.textContent = "Clear all";
+    clearArmed = false;
+    c.addEventListener("click", () => {
+      if (!clearArmed) { clearArmed = true; c.textContent = "Tap again to clear them all"; return; }
+      store.set("sb-notes", []);
+      renderNotes();
+    });
+    box.appendChild(c);
+  }
+
+  /* ---------- Views ---------- */
+  function show(view) {
+    ["home", "session", "end", "getup"].forEach((v) => { $(v).hidden = v !== view; });
+    window.scrollTo(0, 0);
+  }
+
+  /* ---------- Audio: voice + tones ---------- */
+  const synth = window.speechSynthesis || null;
+  let voice = null;
+  function pickVoice() {
+    if (!synth) return;
+    const vs = synth.getVoices().filter((v) => /^en/i.test(v.lang));
+    const prefer = ["Samantha", "Ava", "Serena", "Moira", "Karen", "Kate", "Fiona", "Google UK English Female", "Microsoft Libby", "Microsoft Sonia", "Daniel"];
+    for (const name of prefer) {
+      const v = vs.find((x) => x.name.indexOf(name) !== -1);
+      if (v) { voice = v; return; }
+    }
+    voice = vs[0] || null;
+  }
+  if (synth) { pickVoice(); synth.addEventListener && synth.addEventListener("voiceschanged", pickVoice); }
+
+  let speaking = false;
+  function speak(text, rate) {
+    if (!S.voice || !synth) return;
+    try {
+      synth.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      if (voice) u.voice = voice;
+      u.rate = rate || 0.82; u.pitch = 0.92; u.volume = 0.8;
+      speaking = true;
+      const done = () => { speaking = false; };
+      u.onend = done; u.onerror = done;
+      setTimeout(done, text.length * 95 + 2500);
+      synth.speak(u);
+    } catch (e) { speaking = false; }
+  }
+  function hush() { speaking = false; if (synth) try { synth.cancel(); } catch (e) {} }
+
+  let actx = null;
+  function initAudio() {
+    if (actx) { if (actx.state === "suspended") actx.resume(); return; }
+    try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { actx = null; }
+  }
+  function tone(kind, secs) {
+    if (!S.tones || !actx || !kind) return;
+    const f = { up: [150, 196], up2: [196, 220], down: [196, 131] }[kind];
+    const t0 = actx.currentTime;
+    const o = actx.createOscillator(), g = actx.createGain(), lp = actx.createBiquadFilter();
+    lp.type = "lowpass"; lp.frequency.value = 600;
+    o.type = "sine";
+    o.frequency.setValueAtTime(f[0], t0);
+    o.frequency.linearRampToValueAtTime(f[1], t0 + secs);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(0.06, t0 + Math.min(0.6, secs / 3));
+    g.gain.setValueAtTime(0.06, t0 + secs * 0.7);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + secs);
+    o.connect(lp); lp.connect(g); g.connect(actx.destination);
+    o.start(t0); o.stop(t0 + secs + 0.05);
+  }
+
+  let wakeLock = null;
+  async function holdScreen() {
+    try { if (navigator.wakeLock) wakeLock = await navigator.wakeLock.request("screen"); } catch (e) { wakeLock = null; }
+  }
+  function releaseScreen() { try { wakeLock && wakeLock.release(); } catch (e) {} wakeLock = null; }
+
+  /* ---------- Runner ---------- */
+  const SKIP = { skip: true };
+  let run = null; // { steps, cur, paused, jump, cancelled }
+
+  const raw = (ms) => new Promise((r) => setTimeout(r, ms));
+  async function sleep(ms) {
+    let left = ms;
+    while (left > 0) {
+      if (!run || run.cancelled || run.jump !== null) throw SKIP;
+      if (run.paused) { await raw(150); continue; }
+      const t = Math.min(150, left);
+      await raw(t);
+      left -= t;
+    }
+    if (!run || run.cancelled || run.jump !== null) throw SKIP;
+  }
+  async function waitSpeech() { while (speaking) await sleep(150); }
+
+  const el = {
+    title: $("stepTitle"), orb: $("orb"), tick: $("tick"), orbBox: $("orbBox"), phase: $("phase"), count: $("count"),
+    prompt: $("prompt"), dumpBox: $("dumpBox"), dumpText: $("dumpText"), dots: $("dots")
+  };
+
+  async function setPrompt(text, cls) {
+    if (!isInk()) { el.prompt.classList.add("fade"); await raw(350); }
+    el.prompt.className = "prompt" + (cls ? " " + cls : "");
+    el.prompt.textContent = text;
+  }
+  function resetStage() {
+    el.phase.hidden = true; el.count.hidden = true; el.dumpBox.hidden = true; el.tick.hidden = true;
+    el.orbBox.hidden = false; el.prompt.hidden = false;
+    el.orb.className = "orb ambient"; el.orb.style.transition = ""; el.orb.style.transform = "";
+    el.prompt.textContent = ""; el.phase.textContent = ""; el.count.textContent = "";
+  }
+  function renderDots() {
+    el.dots.innerHTML = "";
+    run.steps.forEach((_, i) => {
+      const s = document.createElement("span");
+      if (i < run.cur) s.className = "done";
+      if (i === run.cur) s.className = "now";
+      el.dots.appendChild(s);
+    });
+  }
+
+  async function runSay(step) {
+    for (const [text, secs] of step.lines) {
+      await setPrompt(text);
+      speak(text);
+      await sleep(secs * 1000);
+      await waitSpeech();
+    }
+  }
+
+  async function runBreath(step) {
+    await setPrompt(step.intro);
+    speak(step.intro);
+    await sleep(6000);
+    await waitSpeech();
+    el.prompt.hidden = true;
+    el.phase.hidden = false; el.count.hidden = false; el.tick.hidden = false;
+    el.orb.className = "orb";
+    for (let c = 1; c <= step.cycles; c++) {
+      el.count.textContent = "Breath " + c + " of " + step.cycles;
+      for (const p of step.phases) {
+        el.phase.textContent = p.label;
+        el.orb.style.transition = "transform " + p.secs + "s ease-in-out";
+        el.orb.style.transform = "scale(" + p.scale + ")";
+        tone(p.tone, p.secs);
+        if (S.voice && (c <= 2 || p.cue === "hum" || step.cycles <= 4)) speak(p.cue, 0.75);
+        for (let s = p.secs; s > 0; s--) {
+          el.tick.textContent = String(s);
+          await sleep(1000);
+        }
+      }
+    }
+    el.tick.textContent = "";
+    hush();
+  }
+
+  async function runShuffle(step) {
+    await setPrompt(step.intro);
+    speak(step.intro);
+    await sleep(8000);
+    await waitSpeech();
+    const pool = WORDS.slice().sort(() => Math.random() - 0.5).slice(0, step.count);
+    for (const w of pool) {
+      await setPrompt(w, "picture");
+      speak(w, 0.72);
+      await sleep(step.secs * 1000);
+    }
+  }
+
+  async function runDump(step) {
+    await setPrompt(step.text);
+    speak("Type whatever is looping. It'll be here in the morning.");
+    el.orbBox.hidden = true;
+    el.dumpBox.hidden = false;
+    el.dumpText.value = "";
+    let done = false;
+    $("dumpDone").onclick = () => {
+      const t = el.dumpText.value.trim();
+      if (t) {
+        const notes = store.get("sb-notes", []);
+        notes.push({ t: Date.now(), text: t });
+        store.set("sb-notes", notes);
+      }
+      el.dumpText.blur();
+      done = true;
+    };
+    while (!done) await sleep(150);
+    el.dumpBox.hidden = true;
+    el.orbBox.hidden = false;
+    await setPrompt("Parked. You don't have to carry it tonight.");
+    speak("Parked. You don't have to carry it tonight.");
+    await sleep(4000);
+    await waitSpeech();
+  }
+
+  const KIND = { say: runSay, breath: runBreath, shuffle: runShuffle, dump: runDump };
+
+  async function start(steps) {
+    initAudio();
+    // prime speech inside the tap so phones allow it later
+    if (S.voice && synth) { try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; synth.speak(u); } catch (e) {} }
+    if (run) run.cancelled = true;
+    const me = { steps, cur: 0, paused: false, jump: null, cancelled: false };
+    run = me;
+    document.body.classList.remove("lightsout");
+    $("lightsBtn").textContent = "Lights out";
+    $("pauseBtn").textContent = "Pause";
+    show("session");
+    holdScreen();
+    while (run === me && me.cur < steps.length) {
+      const step = STEPS[steps[me.cur]];
+      resetStage();
+      renderDots();
+      el.title.textContent = step.title;
+      try {
+        await KIND[step.kind](step);
+        me.cur++;
+      } catch (e) {
+        if (e !== SKIP) throw e;
+        hush();
+        if (me.cancelled || run !== me) return;
+        me.cur = me.jump; me.jump = null;
+      }
+    }
+    if (run === me) finish(true);
+  }
+
+  function finish(completed) {
+    hush();
+    releaseScreen();
+    if (run) run.cancelled = true;
+    run = null;
+    document.body.classList.remove("lightsout");
+    if (completed) show("end"); else { renderNotes(); show("home"); }
+  }
+
+  /* ---------- Controls ---------- */
+  $("skipBtn").addEventListener("click", () => { if (run) { run.paused = false; $("pauseBtn").textContent = "Pause"; run.jump = run.cur + 1; } });
+  $("backBtn").addEventListener("click", () => { if (run) { run.paused = false; $("pauseBtn").textContent = "Pause"; run.jump = Math.max(0, run.cur - 1); } });
+  $("pauseBtn").addEventListener("click", (e) => {
+    if (!run) return;
+    run.paused = !run.paused;
+    e.currentTarget.textContent = run.paused ? "Resume" : "Pause";
+    if (run.paused) hush();
+  });
+  $("lightsBtn").addEventListener("click", (e) => {
+    const on = document.body.classList.toggle("lightsout");
+    e.currentTarget.textContent = on ? "Lights on" : "Lights out";
+  });
+  $("exitBtn").addEventListener("click", () => finish(false));
+  $("againBtn").addEventListener("click", () => start(SEQS.deeper.steps));
+  $("homeBtn").addEventListener("click", () => { renderNotes(); show("home"); });
+  $("getupLink").addEventListener("click", () => show("getup"));
+  $("endGetup").addEventListener("click", () => show("getup"));
+  $("getupBack").addEventListener("click", () => show("home"));
+
+  // the end/skip of last step leads to end screen
+  // (a jump past the final step exits the loop in start())
+
+  /* ---------- Settings UI ---------- */
+  function bindSwitch(id, key) {
+    const sw = $(id);
+    sw.setAttribute("aria-checked", String(!!S[key]));
+    sw.addEventListener("click", () => {
+      S[key] = !S[key];
+      sw.setAttribute("aria-checked", String(S[key]));
+      saveSettings();
+      if (key === "tones" && S.tones) { initAudio(); tone("down", 2.5); }
+      if (key === "voice" && !S.voice) hush();
+    });
+  }
+  function bindSeg(id, key) {
+    $(id).addEventListener("click", (e) => {
+      const b = e.target.closest("button");
+      if (!b) return;
+      S[key] = b.dataset.v;
+      saveSettings();
+      applyDisplay();
+    });
+  }
+  bindSeg("displaySeg", "display");
+  bindSeg("inkSeg", "ink");
+  bindSwitch("voiceSw", "voice");
+  bindSwitch("toneSw", "tones");
+  const range = $("dimRange");
+  range.value = S.bright;
+  range.addEventListener("input", () => { S.bright = Number(range.value); applyBright(); saveSettings(); });
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && run) holdScreen();
+  });
+
+  applyBright();
+  renderHome();
+})();
+</script>
