@@ -195,6 +195,26 @@ body.lightsout #lightsBtn { opacity: 1; }
 .plan strong { color: var(--fg); font-weight: 500; }
 .callout { background: var(--surface); border-radius: 12px; padding: 14px 16px; color: var(--fg-soft); font-size: 15px; }
 
+.rstage { display: flex; flex-direction: column; gap: 16px; margin-top: 8px; }
+.rstage h1 { margin-bottom: 0; }
+.rstage .lede { margin-bottom: 4px; }
+.rstage .states { margin-bottom: 0; }
+.checks { display: grid; gap: 10px; }
+.check {
+  text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+  padding: 14px 16px; display: grid; grid-template-columns: 26px 1fr; gap: 2px 12px; align-items: start;
+}
+.check::before {
+  content: ""; grid-row: 1 / span 2; width: 20px; height: 20px; margin-top: 2px; box-sizing: border-box;
+  border: 2px solid var(--muted); border-radius: 5px; display: grid; place-items: center;
+  font-size: 15px; line-height: 1; color: var(--on-accent);
+}
+.check[aria-pressed="true"]::before { content: "✓"; background: var(--ember-dim); border-color: var(--ember-dim); }
+.check b { font-weight: 500; color: var(--fg); }
+.check span { grid-column: 2; color: var(--muted); font-size: 14px; }
+.nudge { border-color: var(--ember); margin-bottom: 26px; width: 100%; }
+.verdict { display: grid; gap: 14px; }
+.verdict p { font-family: var(--display); font-size: 23px; line-height: 1.35; margin: 0; color: var(--fg); }
 .tick { font-family: var(--display); font-size: 64px; line-height: 1; min-height: 64px; font-variant-numeric: tabular-nums; color: var(--fg); }
 .seg { display: flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; flex: none; }
 .seg button { background: none; border: 0; padding: 8px 14px; font-size: 14px; color: var(--fg-soft); }
@@ -225,7 +245,10 @@ body.lightsout #lightsBtn { opacity: 1; }
 [data-display="eink"] .tick { font-size: 96px; min-height: 96px; }
 [data-display="eink"] .state, [data-display="eink"] .controls button, [data-display="eink"] .iconbtn,
 [data-display="eink"] .ghost, [data-display="eink"] textarea, [data-display="eink"] .seg,
-[data-display="eink"] .switch, [data-display="eink"] .note, [data-display="eink"] .callout { border: 2px solid var(--line); }
+[data-display="eink"] .switch, [data-display="eink"] .note, [data-display="eink"] .callout,
+[data-display="eink"] .check { border: 2px solid var(--line); }
+[data-display="eink"] .check::before { border-color: var(--fg); }
+[data-display="eink"] .nudge { border-width: 3px; }
 [data-display="eink"] .state { padding: 20px; }
 [data-display="eink"] .controls button { padding: 16px 4px; font-size: 16px; font-weight: 600; color: var(--fg); }
 [data-display="eink"] .mark::before { box-shadow: none; }
@@ -251,6 +274,8 @@ body.lightsout #lightsBtn { opacity: 1; }
     <div class="mark">Stressomnia Buster</div>
     <h1>Awake again? Let's <em>turn your body down</em>.</h1>
     <p class="lede">Pick what this waking feels like. You'll get one calm prompt at a time, timed for you, so you can close your eyes and follow along by voice.</p>
+
+    <button class="state nudge" id="homeNudge" hidden><b>Out-of-bed reset</b><span>You've been awake about 15 minutes. Time to get up for a bit.</span><i>Start</i></button>
 
     <p class="label">Right now I feel</p>
     <div class="states" id="states"></div>
@@ -299,7 +324,7 @@ body.lightsout #lightsBtn { opacity: 1; }
 
     <p class="foot">
       There's no clock in this app on purpose. Checking the time keeps the alarm system running.<br><br>
-      <button class="textbtn" id="getupLink">Been awake a long while? The get-up plan</button><br><br>
+      <button class="textbtn" id="getupLink">Awake 15+ minutes? The out-of-bed reset</button><br><br>
       This is a self-help tool, not medical care. If night waking happens most nights for weeks, CBT-I (cognitive behavioral therapy for insomnia) is the most effective treatment and worth asking a doctor about.
     </p>
   </div>
@@ -339,27 +364,76 @@ body.lightsout #lightsBtn { opacity: 1; }
     <div class="mark">Round complete</div>
     <h1>Phone face down. <em>Eyes closed.</em></h1>
     <p class="lede">You've done the work. Keep the long, slow exhales going and let sleep arrive on its own schedule.</p>
+    <p class="callout" id="endNudge" hidden><strong>You've been at this for about 15 minutes.</strong> At this point, getting up for a while usually works better than another round in bed.</p>
     <button class="primary" id="againBtn">Still wired: one more, slower round</button>
-    <button class="ghost" id="endGetup">Awake a long while? The get-up plan</button>
+    <button class="ghost" id="endGetup">Awake 15+ minutes? Out-of-bed reset</button>
     <button class="ghost" id="homeBtn">Back to start</button>
   </div>
 </section>
 
-<!-- GET UP PLAN -->
-<section id="getup" hidden>
+<!-- OUT-OF-BED RESET -->
+<section id="reset" hidden>
   <div class="wrap">
-    <div class="mark">The get-up plan</div>
-    <h1>If you're <em>more alert</em> than drowsy</h1>
-    <p class="lede">When it feels like 20 minutes or more and you're getting frustrated, lying there teaches your brain that bed is a place for struggling. A short break resets that.</p>
-    <ol class="plan">
-      <li><span><strong>Get up and go somewhere else.</strong> Another room or a chair. Keep lights low and warm.</span></li>
-      <li><span><strong>Do something dull and pleasant.</strong> A paper book, folding laundry, a jigsaw. Avoid work, news and scrolling.</span></li>
-      <li><span><strong>Skip food, alcohol and the clock.</strong> No need to know what time it is.</span></li>
-      <li><span><strong>Go back when your eyelids get heavy.</strong> Not when you think you should. Sleepy, not just tired.</span></li>
-      <li><span><strong>Keep tomorrow's wake time the same.</strong> Sleeping in makes the next night harder. Tomorrow you'll be tired, and that pressure helps you sleep.</span></li>
-    </ol>
-    <p class="callout">One short night is uncomfortable, not dangerous. Your body is good at catching up on deep sleep the following night.</p>
-    <p><button class="ghost" id="getupBack" style="width:100%">Back</button></p>
+    <div class="topbar">
+      <div class="mark">Out-of-bed reset</div>
+      <button class="iconbtn" id="resetExit">Close</button>
+    </div>
+
+    <div class="rstage" data-stage="leave">
+      <h1>Still awake after <em>15 minutes</em>? Get up for a bit.</h1>
+      <p class="lede">Lying in bed and struggling teaches your brain that bed is a place for being awake. A short, boring break somewhere else breaks that link. You come back when sleepiness does. Sleep specialists call this stimulus control, and it's a core part of CBT-I.</p>
+      <p class="label">Tap each one as you do it</p>
+      <div class="checks">
+        <button class="check" aria-pressed="false"><b>Get up slowly</b><span>Bring a blanket or robe so you stay warm.</span></button>
+        <button class="check" aria-pressed="false"><b>Go to another room</b><span>Or at least a chair away from the bed. The bed is for sleep only.</span></button>
+        <button class="check" aria-pressed="false"><b>One dim, warm light</b><span>A small lamp, overhead lights off. On the Boox: cold light at 0, warm light low.</span></button>
+        <button class="check" aria-pressed="false"><b>No clock, news, email or social media</b><span>Anything that starts you thinking or counting hours keeps the alarm on.</span></button>
+        <button class="check" aria-pressed="false"><b>Skip snacks and alcohol</b><span>A few sips of water are fine.</span></button>
+      </div>
+      <button class="primary" data-go="activity">I'm out of bed</button>
+      <p class="callout"><strong>Tomorrow morning:</strong> get up at your usual time, even after a rough night, and keep any nap under 20 minutes and before mid-afternoon. That extra sleep pressure makes the next night easier.</p>
+    </div>
+
+    <div class="rstage" data-stage="activity" hidden>
+      <h1>Do something <em>dull and pleasant</em></h1>
+      <p class="lede">You're not trying to make yourself sleep. You're letting sleepiness build on its own while your body stays calm. Pick one.</p>
+      <div class="states">
+        <button class="state" data-act="read"><b>Read something dull</b><span>A paper book or this tablet's reader. Familiar or mildly boring beats gripping.</span><i>open-ended</i></button>
+        <button class="state" data-act="stretch"><b>Gentle stretches</b><span>Guided and slow, mostly on the floor</span><i>~3 min</i></button>
+        <button class="state" data-act="shuffle"><b>Picture the objects</b><span>Sitting up, eyes half closed</span><i>~3 min</i></button>
+        <button class="state" data-act="hands"><b>Something with your hands</b><span>Fold laundry, a jigsaw, coloring, sorting a drawer</span><i>open-ended</i></button>
+      </div>
+      <p class="foot">Skip bright screens, news, email, work and anything exciting.</p>
+    </div>
+
+    <div class="rstage" data-stage="wait" hidden>
+      <h1 id="waitTitle">Settle in</h1>
+      <p class="lede" id="waitText">Stay somewhere calm in dim, warm light. When your eyelids get heavy, come back and check in.</p>
+      <div class="endscreen">
+        <button class="primary" id="remindBtn">Check on me in 10 minutes</button>
+        <p class="count" id="remindNote" hidden>I'll chime and ask how you feel. This only works while this page stays open. If you switch to reading on this tablet, come back on your own when your eyelids get heavy.</p>
+        <button class="ghost" data-go="check">My eyelids are getting heavy</button>
+        <button class="ghost" data-go="activity">Pick a different activity</button>
+      </div>
+    </div>
+
+    <div class="rstage" data-stage="check" hidden>
+      <h1>Sleepiness <em>check</em></h1>
+      <p class="lede">Tired and sleepy aren't the same. Tired is drained, or wired and exhausted at once. Sleepy is fighting to keep your eyes open. Wait for sleepy. Tap any that are true right now.</p>
+      <div class="checks" id="sleepChecks">
+        <button class="check" aria-pressed="false"><b>Eyelids feel heavy</b></button>
+        <button class="check" aria-pressed="false"><b>Yawning</b></button>
+        <button class="check" aria-pressed="false"><b>Reading the same line twice</b></button>
+        <button class="check" aria-pressed="false"><b>Head nodding, body heavy</b></button>
+        <button class="check" aria-pressed="false"><b>Thoughts drifting or going fuzzy</b></button>
+        <button class="check" aria-pressed="false"><b>Feeling warm and slow</b></button>
+      </div>
+      <button class="primary" id="checkBtn">What should I do?</button>
+      <div class="verdict" id="verdict" hidden>
+        <p id="verdictText"></p>
+        <div class="endscreen" id="verdictBtns"></div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -483,6 +557,31 @@ body.lightsout #lightsBtn { opacity: 1; }
       ["One rough night won't ruin tomorrow. You'll cope. You always have.", 8],
       ["Your only job right now is to rest. Sleep will follow when it's ready.", 8]
     ]},
+    stretch: { title: "Gentle stretches", kind: "say", time: "3 min", lines: [
+      ["Sit comfortably on the floor or in a chair. Move slowly, and never into pain.", 8],
+      ["Let your right ear drop toward your right shoulder. Breathe there.", 15],
+      ["Now let your left ear drop toward your left shoulder.", 15],
+      ["Roll your shoulders slowly backward, five times.", 15],
+      ["Fold forward over your legs. Let your head and arms hang heavy.", 25],
+      ["Slowly roll back up, one vertebra at a time.", 10],
+      ["If there's a wall nearby, lie down and rest your legs up against it. Otherwise, kneel and fold forward with your forehead down.", 12],
+      ["Stay here and breathe slowly.", 45],
+      ["Gently come back to sitting.", 8]
+    ]},
+    backtobed: { title: "Back to bed", kind: "say", lines: [
+      ["Head back to bed now, while the sleepiness is here. Leave the lights off.", 9],
+      ["Lie down, and let the bed take all of your weight.", 8]
+    ]},
+    exhaleShort: { title: "Long exhale", kind: "breath",
+      intro: "A few slow breaths. In for four, out for seven.",
+      cycles: 5,
+      phases: [B("Breathe in", 4, 1, "In", "up"), B("Breathe out", 7, .36, "out", "down")]
+    },
+    returnclose: { title: "Goodnight", kind: "say", lines: [
+      ["If sleep hasn't come in about fifteen minutes, it's fine to get up again.", 9],
+      ["Every time you do, your brain learns a little more that bed is for sleeping.", 9],
+      ["Put the tablet down now. Goodnight.", 8]
+    ]},
     close: { title: "Settle in", kind: "say", lines: [
       ["That's the end of this round. Put the phone down, screen away.", 8],
       ["Keep breathing slowly. Let sleep find you.", 8]
@@ -494,10 +593,24 @@ body.lightsout #lightsBtn { opacity: 1; }
     anxious: { name: "Heart pounding", sub: "Jolted awake, anxious, or a bad dream", steps: ["orient", "sigh", "hum", "butterfly", "cool", "safe", "close"] },
     tense:   { name: "Body won't settle", sub: "Restless, tense, can't get comfortable", steps: ["arrive", "sigh", "pmr", "exhale", "bodyscan", "close"] },
     awake:   { name: "Wide awake, not upset", sub: "Calm enough, just can't drift off", steps: ["reassure", "478", "shuffle", "paradox", "close"] },
-    deeper:  { name: "One more, slower", steps: ["exhale", "bodyscan", "shuffle", "paradox", "close"] }
+    deeper:  { name: "One more, slower", steps: ["exhale", "bodyscan", "shuffle", "paradox", "close"] },
+    backtobed: { name: "Back to bed", steps: ["backtobed", "exhaleShort", "bodyscan", "returnclose"] }
   };
 
-  const SINGLES = ["sigh", "exhale", "hum", "478", "butterfly", "pmr", "bodyscan", "shuffle", "safe", "dump", "paradox"];
+  const SINGLES = ["sigh", "exhale", "hum", "478", "butterfly", "pmr", "bodyscan", "shuffle", "safe", "dump", "paradox", "stretch"];
+
+  /* ---------- 15-minute tracking (never shown as a clock) ---------- */
+  const NIGHT_KEY = "sb-night";
+  function markNight(force) {
+    const n = store.get(NIGHT_KEY, 0);
+    if (force || !n || Date.now() - n > 3 * 3600e3) store.set(NIGHT_KEY, Date.now());
+  }
+  function minutesAwake() {
+    const n = store.get(NIGHT_KEY, 0);
+    if (!n) return 0;
+    const m = (Date.now() - n) / 60000;
+    return m > 180 ? 0 : m;
+  }
 
   const WORDS = ["an acorn","a teacup","a lantern","a pinecone","a feather","a canoe","a red mitten","a lighthouse","a smooth pebble","a violin","a honeycomb","a snowflake","a yellow umbrella","a small cactus","a seashell","a kite","a wheelbarrow","a candle","an owl","a maple leaf","a rowboat","a patchwork quilt","a pear","a harmonica","a windmill","a cello","a brass compass","a fern","a tortoise","a bicycle","an apricot","a birch tree","a wool scarf","a meadow","a hammock","a river stone","a paper boat","a wool sock","a wooden button","a clay pot","a hot-air balloon","a stack of pancakes","a watering can","a pine forest","a snail","a peach","a tugboat","a bookshelf","a lemon","a dandelion","a wooden spoon","a field mouse","a croissant","a rocking chair","a sunflower","a glass marble","a sailboat","a loaf of bread","a garden gate","an otter","a cloud","a pumpkin","a chess pawn","a blue ribbon","an igloo","a flute","a seagull","a mushroom","a clothesline","a cherry","a red barn","a telescope","a feather pillow","a mug of cocoa","an olive","a raindrop","a fox","a stone cottage","stepping stones","a paintbrush","a basket of apples","a fishing boat","a bowl of soup","a pair of slippers","a hedgehog","a lily pad"];
 
@@ -576,9 +689,103 @@ body.lightsout #lightsBtn { opacity: 1; }
 
   /* ---------- Views ---------- */
   function show(view) {
-    ["home", "session", "end", "getup"].forEach((v) => { $(v).hidden = v !== view; });
+    ["home", "session", "end", "reset"].forEach((v) => { $(v).hidden = v !== view; });
+    const late = minutesAwake() >= 15;
+    if (view === "home") $("homeNudge").hidden = !late;
+    if (view === "end") {
+      const again = $("againBtn"), reset = $("endGetup");
+      $("endNudge").hidden = !late;
+      again.className = late ? "ghost" : "primary";
+      reset.className = late ? "primary" : "ghost";
+      if (late) again.parentNode.insertBefore(reset, again);
+      else reset.parentNode.insertBefore(again, reset);
+    }
     window.scrollTo(0, 0);
   }
+
+  /* ---------- Out-of-bed reset ---------- */
+  function showReset(stage) {
+    show("reset");
+    document.querySelectorAll("#reset .rstage").forEach((s) => { s.hidden = s.dataset.stage !== stage; });
+    if (stage === "leave") document.querySelectorAll('#reset [data-stage="leave"] .check').forEach((c) => c.setAttribute("aria-pressed", "false"));
+    if (stage === "check") {
+      document.querySelectorAll("#sleepChecks .check").forEach((c) => c.setAttribute("aria-pressed", "false"));
+      $("verdict").hidden = true;
+      $("checkBtn").hidden = false;
+    }
+  }
+  document.querySelectorAll("#reset .check").forEach((c) => c.addEventListener("click", () => {
+    c.setAttribute("aria-pressed", String(c.getAttribute("aria-pressed") !== "true"));
+    if (c.closest("#sleepChecks")) { $("verdict").hidden = true; $("checkBtn").hidden = false; }
+  }));
+  $("reset").addEventListener("click", (e) => {
+    const go = e.target.closest("[data-go]");
+    if (go) showReset(go.dataset.go);
+  });
+
+  const WAIT = {
+    read: ["Settle in with your book", "Sit somewhere comfortable with one dim, warm light. Choose something familiar or a little boring. If you're reading on this tablet, switch to the reader and come back here when your eyelids get heavy."],
+    hands: ["Keep it slow and low-stakes", "Fold, sort or color in dim, warm light. There's no goal to finish. When you notice yawning or heavy eyelids, come back and check in."]
+  };
+  document.querySelectorAll("#reset [data-act]").forEach((b) => b.addEventListener("click", () => {
+    const act = b.dataset.act;
+    if (act === "stretch" || act === "shuffle") { start([act], () => showReset("check")); return; }
+    $("waitTitle").textContent = WAIT[act][0];
+    $("waitText").textContent = WAIT[act][1];
+    showReset("wait");
+  }));
+
+  let remindDue = null;
+  function chime() {
+    if (!actx) return;
+    [392, 330].forEach((f, i) => {
+      const t0 = actx.currentTime + i * 0.9;
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = "sine"; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(0.09, t0 + 0.05);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.6);
+      o.connect(g); g.connect(actx.destination);
+      o.start(t0); o.stop(t0 + 1.7);
+    });
+  }
+  function setRemind(on) {
+    remindDue = on ? Date.now() + 10 * 60000 : null;
+    $("remindBtn").textContent = on ? "Reminder set. Cancel it" : "Check on me in 10 minutes";
+    $("remindNote").hidden = !on;
+    if (on) holdScreen(); else if (!run) releaseScreen();
+  }
+  $("remindBtn").addEventListener("click", () => { initAudio(); setRemind(remindDue === null); });
+  setInterval(() => {
+    if (remindDue !== null && Date.now() >= remindDue) {
+      setRemind(false);
+      chime();
+      setTimeout(() => speak("Quick check in. How heavy are your eyelids?"), 1800);
+      showReset("check");
+    }
+  }, 5000);
+
+  $("checkBtn").addEventListener("click", () => {
+    const n = document.querySelectorAll('#sleepChecks .check[aria-pressed="true"]').length;
+    const box = $("verdictBtns");
+    box.innerHTML = "";
+    const add = (label, cls, fn) => {
+      const b = document.createElement("button");
+      b.className = cls; b.textContent = label; b.addEventListener("click", fn); box.appendChild(b);
+    };
+    if (n >= 2) {
+      $("verdictText").textContent = "That's sleepiness. Go back to bed now, even mid-chapter. Don't wait for it to get stronger.";
+      add("Walk me back to bed", "primary", () => { setRemind(false); markNight(true); start(SEQS.backtobed.steps); });
+    } else {
+      $("verdictText").textContent = (n === 1 ? "Getting closer, but not quite yet." : "Not sleepy yet, and that's fine.") + " Stay up a little longer. Sleepiness comes in waves, and the next one is on its way.";
+      add("Check again in 10 minutes", "primary", () => { showReset("wait"); setRemind(true); });
+      add("Pick a different activity", "ghost", () => showReset("activity"));
+    }
+    $("checkBtn").hidden = true;
+    $("verdict").hidden = false;
+  });
+  $("resetExit").addEventListener("click", () => { setRemind(false); show("home"); });
+  $("homeNudge").addEventListener("click", () => showReset("leave"));
 
   /* ---------- Audio: voice + tones ---------- */
   const synth = window.speechSynthesis || null;
@@ -760,12 +967,13 @@ body.lightsout #lightsBtn { opacity: 1; }
 
   const KIND = { say: runSay, breath: runBreath, shuffle: runShuffle, dump: runDump };
 
-  async function start(steps) {
+  async function start(steps, after) {
     initAudio();
+    markNight(false);
     // prime speech inside the tap so phones allow it later
     if (S.voice && synth) { try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; synth.speak(u); } catch (e) {} }
     if (run) run.cancelled = true;
-    const me = { steps, cur: 0, paused: false, jump: null, cancelled: false };
+    const me = { steps, after, cur: 0, paused: false, jump: null, cancelled: false };
     run = me;
     document.body.classList.remove("lightsout");
     $("lightsBtn").textContent = "Lights out";
@@ -793,9 +1001,11 @@ body.lightsout #lightsBtn { opacity: 1; }
   function finish(completed) {
     hush();
     releaseScreen();
+    const after = run && run.after;
     if (run) run.cancelled = true;
     run = null;
     document.body.classList.remove("lightsout");
+    if (after) { if (completed) after(); else showReset("activity"); return; }
     if (completed) show("end"); else { renderNotes(); show("home"); }
   }
 
@@ -815,9 +1025,8 @@ body.lightsout #lightsBtn { opacity: 1; }
   $("exitBtn").addEventListener("click", () => finish(false));
   $("againBtn").addEventListener("click", () => start(SEQS.deeper.steps));
   $("homeBtn").addEventListener("click", () => { renderNotes(); show("home"); });
-  $("getupLink").addEventListener("click", () => show("getup"));
-  $("endGetup").addEventListener("click", () => show("getup"));
-  $("getupBack").addEventListener("click", () => show("home"));
+  $("getupLink").addEventListener("click", () => showReset("leave"));
+  $("endGetup").addEventListener("click", () => showReset("leave"));
 
   // the end/skip of last step leads to end screen
   // (a jump past the final step exits the loop in start())
@@ -857,5 +1066,6 @@ body.lightsout #lightsBtn { opacity: 1; }
 
   applyBright();
   renderHome();
+  $("homeNudge").hidden = minutesAwake() < 15;
 })();
 </script>
